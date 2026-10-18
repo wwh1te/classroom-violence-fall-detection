@@ -136,7 +136,7 @@ data/raw/
 
 Không đưa video thật hoặc dữ liệu cá nhân lên repository công khai.
 
-### 6. Chạy thử YOLO Pose
+### 6. Chạy YOLO Pose + Tracking
 
 Đặt video thử nghiệm tại:
 
@@ -144,10 +144,11 @@ Không đưa video thật hoặc dữ liệu cá nhân lên repository công kha
 data/raw/sample.mp4
 ```
 
-Chạy:
+Cài dependency và chạy:
 
 ```powershell
-python src/pose/pose_detector.py
+python -m pip install -r requirements-pose.txt
+python -m src.pose.pipeline --source data/raw/sample.mp4
 ```
 
 ### 7. Chạy hệ thống hoàn chỉnh
@@ -212,3 +213,14 @@ python -m src.data.pipeline audit
 Xem data/metadata/local/audit.json trước khi huấn luyện/đánh giá.
 Nhãn cấp clip kế thừa từ nguồn; template sự kiện phải được người xem duyệt.
 Video được lưu cục bộ và bị loại khỏi Git. Tải trực tiếp từ tác giả theo catalog.
+
+## YOLO Pose + Tracking (issue #2)
+
+Cài dependency và chạy pipeline trích xuất keypoint/tracking; kết quả được lưu ở thư mục mới dưới `outputs/pose_tracking/`, không ghi đè dữ liệu nguồn hoặc kết quả trước:
+
+```powershell
+python -m pip install -r requirements-pose.txt
+python -m src.pose.pipeline
+```
+
+Mặc định xử lý video trong `data/processed`; truyền `--source` cho video/thư mục khác. Định dạng kết quả, baseline té ngã heuristic và các giới hạn được mô tả trong [docs/pose_tracking.md](docs/pose_tracking.md).
