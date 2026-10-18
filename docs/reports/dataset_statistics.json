@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-17",
+  "videos": 420,
+  "source_counts": {
+    "airtlab/normal": 120,
+    "airtlab/violence": 230,
+    "urfall/normal": 40,
+    "urfall/fall": 30
+  },
+  "recording_groups": 245,
+  "split_components": 227,
+  "split_counts": {
+    "test/fall": 4,
+    "test/normal": 23,
+    "test/violence": 34,
+    "train/fall": 23,
+    "train/normal": 113,
+    "train/violence": 162,
+    "val/fall": 3,
+    "val/normal": 24,
+    "val/violence": 34
+  },
+  "raw_bytes": 1197809967,
+  "processed_bytes": 311002544,
+  "source_duration_seconds": 2369.1666666666665,
+  "processed_duration_seconds": 2375.266666666667,
+  "processed_frames": 35629,
+  "audit_errors": [],
+  "near_duplicate_candidates": 21,
+  "cross_split_near_duplicate_candidates": 0,
+  "pending_clip_review": 420,
+  "ready_for_final_evaluation": false,
+  "manifest_sha256": "ba5fe1a87847a31eec9d8c50cf131e2d1ed713c34443847db186675d3afbb413",
+  "catalog_sha256": "405d4d5a7eb01aedc85e2cbfdce4426281337ea219dbfce8a8100149721dd88f",
+  "config": {
+    "width": 640,
+    "height": 360,
+    "fps": 15,
+    "seed": 42,
+    "split_ratios": [
+      0.7,
+      0.15,
+      0.15
+    ],
+    "near_duplicate_hamming": 4
+  }
+}
