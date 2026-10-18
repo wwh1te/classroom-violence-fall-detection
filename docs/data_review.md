@@ -37,8 +37,9 @@ Mở hai video trong data/processed/normal nếu tên có adl, hoặc data/proce
 
 Khuyến nghị xem 30 video fall và lấy mẫu normal/violence. Chỉ ghi các video thực sự đã xem. Nhãn cấp video mô tả việc có sự kiện trong clip, không có nghĩa mọi frame đều thuộc nhãn đó.
 
-| Video đã xem | Nhãn nguồn | Mở được/RGB đúnG | Nhận xét nhãn | Quyết định |
-| 21/21 | AIRTLab](https://github.com/airtlab/A-Dataset-for-Automatic-Violence-Detection-in-Videos/tree/1f7747e104301ccaa82ef5a2f6804b51ced1c398)/[UR Fall Detection](https://fenix.ur.edu.pl/mkepski/ds/uf.html) | Đã kiểm tra | Đã kiểm tra | Giữ cả hai |
+| Video đã xem | Nhãn nguồn | Mở được/RGB đúng | Nhận xét nhãn | Quyết định |
+| --- | --- | --- | --- | --- |
+| 21/21 | [AIRTLab](https://github.com/airtlab/A-Dataset-for-Automatic-Violence-Detection-in-Videos/tree/1f7747e104301ccaa82ef5a2f6804b51ced1c398)/[UR Fall Detection](https://fenix.ur.edu.pl/mkepski/ds/uf.html) | Đã kiểm tra | Đã kiểm tra | Giữ cả hai |
 
 ## 3. Kết luận bàn giao
 
