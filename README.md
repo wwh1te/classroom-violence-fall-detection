@@ -195,3 +195,20 @@ streamlit run app/app.py
 - **An toàn dữ liệu:** Video mô phỏng bạo lực và té ngã phải được thực hiện trong điều kiện kiểm soát, không tạo va chạm thật hoặc yêu cầu người tham gia thực hiện động tác nguy hiểm.
 
 - **Trách nhiệm sử dụng:** Kết quả chỉ là cảnh báo nghi ngờ. Giáo viên hoặc người quản lý phải xem lại video trước khi đưa ra quyết định.
+
+## Quy trình dữ liệu (issue #1)
+
+Bản triển khai dữ liệu có tại [docs/data_workflow.md](docs/data_workflow.md).
+Nguồn và điều khoản: [docs/dataset_sources.md](docs/dataset_sources.md).
+Quy tắc nhãn và mốc sự kiện: [docs/annotation_guide.md](docs/annotation_guide.md).
+
+```powershell
+python -m pip install -r requirements-data.txt
+python -m src.data.pipeline download
+python -m src.data.pipeline prepare
+python -m src.data.pipeline audit
+```
+
+Xem data/metadata/local/audit.json trước khi huấn luyện/đánh giá.
+Nhãn cấp clip kế thừa từ nguồn; template sự kiện phải được người xem duyệt.
+Video được lưu cục bộ và bị loại khỏi Git. Tải trực tiếp từ tác giả theo catalog.
