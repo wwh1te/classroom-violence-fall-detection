@@ -43,7 +43,7 @@ Hệ thống phân tích chuyển động cơ thể qua nhiều khung hình, đ�
 - `app/` - Chứa giao diện Streamlit.
 - `configs/` - Chứa cấu hình dataset, mô hình và ngưỡng cảnh báo.
 - `data/raw/` - Chứa video gốc theo các lớp `normal`, `violence`, `fall`.
-- `data/processed/` - Chứa dữ liệu đã chuẩn hóa và các chuỗi keypoint.
+- `data/processed/` - Chứa video RGB chuẩn hóa; dữ liệu keypoint được xuất riêng.
 - `data/annotations/` - Chứa nhãn hành động và thời điểm xảy ra sự kiện.
 - `data/metadata/` - Chứa thông tin nguồn, người tham gia, bối cảnh và giấy phép.
 - `src/data/` - Xử lý video, cắt clip, trích xuất frame và chia dữ liệu.
@@ -147,20 +147,20 @@ data/raw/sample.mp4
 Chạy:
 
 ```powershell
-python src/pose/pose_detector.py
+python -m src.pose.pipeline --source data\raw\sample.mp4
 ```
 
-### 7. Chạy hệ thống hoàn chỉnh
+Đầu ra được tạo riêng trong `outputs\pose\`; chi tiết ở [docs/pose_workflow.md](docs/pose_workflow.md).
+
+### 7. Chạy trên dữ liệu đã chuẩn bị
+
+Sau khi tạo manifest bằng quy trình dữ liệu:
 
 ```powershell
-python src/inference/predict_video.py --source data/raw/sample.mp4
+python -m src.pose.pipeline --manifest data\metadata\local\manifest.jsonl --split test
 ```
 
-Hoặc chạy giao diện:
-
-```powershell
-streamlit run app/app.py
-```
+Repository hiện cung cấp extraction/tracking và baseline candidate qua CLI; giao diện Streamlit và phân loại violence/fall hoàn chỉnh chưa nằm trong phạm vi triển khai này.
 
 ## Hướng dẫn sử dụng
 
@@ -212,3 +212,20 @@ python -m src.data.pipeline audit
 Xem data/metadata/local/audit.json trước khi huấn luyện/đánh giá.
 Nhãn cấp clip kế thừa từ nguồn; template sự kiện phải được người xem duyệt.
 Video được lưu cục bộ và bị loại khỏi Git. Tải trực tiếp từ tác giả theo catalog.
+
+## YOLO Pose và baseline té ngã (issue #2)
+
+Cài phần phụ thuộc:
+
+```powershell
+python -m pip install -r requirements-pose.txt
+```
+
+Sau khi chuẩn bị dữ liệu, chạy một video hoặc split từ manifest:
+
+```powershell
+python -m src.pose.pipeline --source data\processed\fall\<sample_id>.mp4
+python -m src.pose.pipeline --manifest data\metadata\local\manifest.jsonl --split test
+```
+
+Kết quả chỉ được tạo mới trong `outputs\pose\`; xem [docs/pose_workflow.md](docs/pose_workflow.md) để biết schema keypoint, ngưỡng heuristic và các giới hạn đánh giá. Baseline là bộ luật sàng lọc candidate, không phải bộ phân loại té ngã đã được huấn luyện/kiểm định.

@@ -1,0 +1,10 @@
+{
+  "model": "yolo11n-pose.pt",
+  "confidence": 0.25,
+  "image_size": 640,
+  "tracker": "bytetrack.yaml",
+  "keypoint_confidence": 0.25,
+  "fall_box_aspect_ratio": 1.25,
+  "fall_torso_tilt_degrees": 50.0,
+  "fall_confirm_frames": 3
+}
