@@ -100,25 +100,41 @@ python -c "from ultralytics import YOLO; print('Ultralytics imported successfull
 
 ## 6. Kiểm tra YOLO Pose
 
-Cài dependency bổ sung cho YOLO Pose:
+Tạo thư mục mẫu nếu chưa có:
 
 ```powershell
-python -m pip install -r requirements-pose.txt
+New-Item -ItemType Directory -Force data\raw
+New-Item -ItemType Directory -Force outputs\videos
 ```
 
-Sau khi đã có video chuẩn hóa từ bước chuẩn bị dữ liệu, chạy:
+Đặt một video kiểm tra tại:
+
+```text
+data/raw/sample.mp4
+```
+
+Tạo file `test_pose.py` ở thư mục gốc:
+
+```python
+from ultralytics import YOLO
+
+model = YOLO("yolo11n-pose.pt")
+results = model.predict(
+    source="data/raw/sample.mp4",
+    conf=0.4,
+    save=True,
+)
+
+print(f"Processed {len(results)} frames")
+```
+
+Chạy:
 
 ```powershell
-python -m src.pose.pipeline --source data\processed\fall\<sample_id>.mp4
+python test_pose.py
 ```
 
-Hoặc chạy các video được liệt kê trong manifest đã tạo:
-
-```powershell
-python -m src.pose.pipeline --manifest data\metadata\local\manifest.jsonl --split test
-```
-
-Mỗi lượt chạy tạo thư mục mới dưới `outputs\pose\` với `poses.jsonl`, `annotated.mp4` và `summary.json`. Video nguồn, manifest và metadata không bị sửa. Weight mặc định `yolo11n-pose.pt` được Ultralytics tải/cached khi chạy lần đầu; dùng `--model <path>` để chỉ định weight khác. Chi tiết định dạng và giới hạn baseline: [docs/pose_workflow.md](docs/pose_workflow.md).
+Kết quả mặc định được lưu trong thư mục `runs/pose/predict*`.
 
 ## 7. Chạy giao diện
 
