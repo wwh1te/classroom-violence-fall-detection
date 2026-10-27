@@ -134,25 +134,49 @@ data/raw/
 └── fall/
 ```
 
-Không đưa video thật hoặc dữ liệu cá nhân lên repository công khai.
+Có thể đặt video trực tiếp trong `data/raw/` hoặc trong các thư mục con. Không đưa video thật hoặc dữ liệu cá nhân lên repository công khai.
 
 ### 6. Chạy thử YOLO Pose
 
-Đặt video thử nghiệm tại:
+YOLO có thể chạy với một video hoặc quét đệ quy tất cả video hỗ trợ trong `data/raw/`:
 
 ```text
-data/raw/sample.mp4
+data/raw/
+├── sample.mp4
+└── fall/
+    └── example.mp4
 ```
-
-Chạy:
 
 ```powershell
 python -m src.pose.pipeline --source data\raw\sample.mp4
+python -m src.pose.pipeline --source data\raw
 ```
 
-Đầu ra được tạo riêng trong `outputs\pose\`; chi tiết ở [docs/pose_workflow.md](docs/pose_workflow.md).
+Lệnh thư mục lần lượt xử lý các file `.avi`, `.m4v`, `.mkv`, `.mov`, `.mp4`, `.mpeg`, `.mpg`, `.wmv`, `.webm`, kể cả trong thư mục con. Kết quả từng video được tạo riêng trong `outputs\pose\`; video gốc không bị sửa. Nếu chưa cần chuẩn hóa, có thể chạy YOLO trực tiếp với video gốc.
 
-### 7. Chạy trên dữ liệu đã chuẩn bị
+### 7. Chuẩn hóa video trong `data/raw`
+
+Để chuyển các video sang MP4, 640×360 và 15 FPS (có thể đổi trong `configs/data.json`), chạy:
+
+```powershell
+python -m src.data.pipeline normalize-raw
+```
+
+Video đã chuẩn hóa được lưu trong `data\processed\raw\` theo cấu trúc thư mục tương ứng; video gốc trong `data\raw\` được giữ nguyên. Kết quả và lỗi (nếu có) được ghi vào `data\metadata\local\raw_normalization.jsonl` và `raw_normalization_errors.jsonl`. Lệnh không ghi đè đầu ra đã tồn tại; nếu muốn chạy lại, chỉ định thư mục đầu ra mới, ví dụ:
+
+```powershell
+python -m src.data.pipeline normalize-raw --output-dir data\processed\raw_v2
+```
+
+Chuẩn hóa độc lập này không tự gán nhãn hay tạo train/val/test split. Để chuẩn bị manifest dataset có nhãn, checksum, nhóm bản ghi và split, hãy dùng đầy đủ quy trình `download`, `prepare`, `audit` trong [docs/data_workflow.md](docs/data_workflow.md).
+
+Sau đó có thể chạy YOLO trên toàn bộ video chuẩn hóa:
+
+```powershell
+python -m src.pose.pipeline --source data\processed\raw
+```
+
+### 8. Chạy trên dữ liệu đã chuẩn bị
 
 Sau khi tạo manifest bằng quy trình dữ liệu:
 

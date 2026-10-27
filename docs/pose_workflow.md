@@ -20,7 +20,7 @@ Project không lưu weight vào thư mục dữ liệu. Mặc định Ultralytic
 ## Chạy một video
 
 ```powershell
-python -m src.pose.pipeline --source data\processed\fall\<sample_id>.mp4
+python -m src.pose.pipeline --source data\raw\sample.mp4
 ```
 
 Video nguồn là chỉ đọc. Mỗi lần chạy tạo một thư mục mới trong `outputs/pose/`, gồm:
@@ -30,6 +30,22 @@ Video nguồn là chỉ đọc. Mỗi lần chạy tạo một thư mục mới 
 - `summary.json`: thông số chạy, số frame và số phát hiện.
 
 Tên thư mục dùng ID video, hash đường dẫn và timestamp UTC; file kết quả không ghi vào `data/raw`, `data/processed` hoặc metadata. Có thể chọn `--output-dir` khác. Nếu dùng `--run-id`, ID phải mới; chạy trùng thư mục sẽ báo lỗi thay vì ghi đè.
+
+## Chạy tất cả video trong thư mục
+
+`--source` cũng nhận đường dẫn thư mục. Pipeline tìm đệ quy các file `.avi`, `.m4v`, `.mkv`, `.mov`, `.mp4`, `.mpeg`, `.mpg`, `.wmv` và `.webm`, sau đó lần lượt chạy YOLO trên từng video:
+
+```powershell
+python -m src.pose.pipeline --source data\raw
+```
+
+Các video trực tiếp trong thư mục hoặc ở thư mục con đều được hỗ trợ; thư mục không có video phù hợp sẽ báo lỗi. Mỗi video có thư mục kết quả riêng. Nhãn `source_label` chỉ lấy từ thư mục con đầu tiên khi tên thư mục là `normal`, `violence` hoặc `fall`; việc này không ảnh hưởng kết quả YOLO.
+
+Có thể chạy tương tự trên dữ liệu đã chuẩn hóa:
+
+```powershell
+python -m src.pose.pipeline --source data\processed\raw
+```
 
 ## Dùng manifest của pipeline dữ liệu
 

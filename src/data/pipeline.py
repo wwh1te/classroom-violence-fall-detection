@@ -15,6 +15,7 @@ from urllib.request import Request, urlopen
 
 LABELS = {"normal", "violence", "fall"}
 SPLITS = ("train", "val", "test")
+VIDEO_EXTENSIONS = {".avi", ".m4v", ".mkv", ".mov", ".mp4", ".mpeg", ".mpg", ".wmv", ".webm"}
 
 def read_rows(path):
     return [json.loads(x) for x in Path(path).read_text(encoding="utf-8-sig").splitlines() if x.strip()]
@@ -109,14 +110,9 @@ def dhash(frame):
     tiny = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), (9, 8))
     return f"{sum(int(b) << i for i,b in enumerate((tiny[:,1:] > tiny[:,:-1]).flatten())):016x}"
 
-def normalize(row, root, cfg):
+def _normalize_video(source, path, cfg, crop=None):
     import cv2
-    source = inside(root, row["raw_path"])
-    if checksum(source) != row["sha256"]:
-        raise ValueError("Raw checksum changed")
     original = inspect(source)
-    name = f"data/processed/{row['label']}/{row['sample_id']}.mp4"
-    path = inside(root, name)
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(path.stem + ".tmp.mp4")
     width, height, fps = cfg["width"], cfg["height"], cfg["fps"]
@@ -135,7 +131,7 @@ def normalize(row, root, cfg):
                 if not ok:
                     raise ValueError("Decode failed during normalization")
                 source_index += 1
-            image = frame[:,frame.shape[1]//2:] if row.get("crop") == "right_half_rgb" else frame
+            image = frame[:,frame.shape[1]//2:] if crop == "right_half_rgb" else frame
             image = letterbox(image, width, height)
             writer.write(image)
             if i in positions:
@@ -151,6 +147,18 @@ def normalize(row, root, cfg):
         raise
     finally:
         cap.release()
+    return dict(original=original, video=video, dhashes=hashes)
+
+def normalize(row, root, cfg):
+    source = inside(root, row["raw_path"])
+    if checksum(source) != row["sha256"]:
+        raise ValueError("Raw checksum changed")
+    name = f"data/processed/{row['label']}/{row['sample_id']}.mp4"
+    path = inside(root, name)
+    normalized = _normalize_video(source, path, cfg, row.get("crop"))
+    original, video, hashes = (
+        normalized["original"], normalized["video"], normalized["dhashes"]
+    )
     return dict(row, processed_path=name, processed_sha256=checksum(path),
                 original=original, video=video, dhashes=hashes,
                 label_status="source_label_pending_review", subject_ids=[],
@@ -261,12 +269,58 @@ def annotations(path, rows):
             writer.writerow(dict(sample_id=row["sample_id"],label=row["label"],status="pending",
                                  notes="Source clip label only; review event boundaries."))
 
+def normalize_raw(source_dir, output_dir, root, cfg):
+    source_dir = inside(root, source_dir)
+    output_dir = inside(root, output_dir)
+    if source_dir == output_dir or source_dir in output_dir.parents:
+        raise ValueError("Normalized output directory must be outside the raw source folder")
+    sources = sorted(
+        path for path in source_dir.rglob("*")
+        if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS
+    )
+    if not sources:
+        raise ValueError(f"No supported video files found in folder: {source_dir}")
+
+    planned = [
+        (source, output_dir / source.relative_to(source_dir).with_suffix(".mp4"))
+        for source in sources
+    ]
+    destinations = [destination.resolve() for _, destination in planned]
+    if len(set(destinations)) != len(destinations):
+        raise ValueError("Multiple raw videos map to the same normalized output path")
+    existing = [str(path) for path in destinations if path.exists()]
+    if existing:
+        raise FileExistsError(
+            "Normalized output already exists; move it or choose another output directory: "
+            + existing[0]
+        )
+
+    results = []
+    errors = []
+    for source, destination in planned:
+        try:
+            normalized = _normalize_video(source, destination, cfg)
+            results.append(
+                {
+                    "raw_path": source.relative_to(root).as_posix(),
+                    "processed_path": destination.relative_to(root).as_posix(),
+                    "sha256": checksum(source),
+                    "processed_sha256": checksum(destination),
+                    **normalized,
+                }
+            )
+        except (OSError, ValueError) as exc:
+            errors.append({"raw_path": source.relative_to(root).as_posix(), "error": str(exc)})
+    return results, errors
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command",choices=["download","prepare","audit"])
+    parser.add_argument("command",choices=["download","prepare","audit","normalize-raw"])
     parser.add_argument("--root",type=Path,default=Path.cwd())
     parser.add_argument("--catalog",default="data/metadata/catalog.jsonl")
     parser.add_argument("--config",default="configs/data.json")
+    parser.add_argument("--source-dir",default="data/raw")
+    parser.add_argument("--output-dir",default="data/processed/raw")
     parser.add_argument("--workers",type=int,default=4)
     parser.add_argument("--max-file-mb",type=int,default=64)
     parser.add_argument("--dataset",choices=["airtlab","urfall"])
@@ -275,6 +329,12 @@ def main(argv=None):
     local = root/"data/metadata/local"
     cfg = json.loads((root/args.config).read_text(encoding="utf-8-sig"))
     try:
+        if args.command=="normalize-raw":
+            results, errors = normalize_raw(args.source_dir,args.output_dir,root,cfg)
+            write_rows(local/"raw_normalization.jsonl",results)
+            write_rows(local/"raw_normalization_errors.jsonl",errors)
+            print(json.dumps({"normalized":len(results),"errors":len(errors)},indent=2))
+            return int(bool(errors))
         if args.command=="download":
             rows = read_rows(root/args.catalog)
             if len({r["sample_id"] for r in rows})!=len(rows):

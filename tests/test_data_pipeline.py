@@ -86,6 +86,48 @@ def test_real_video_normalizes_rgb_crop_fps_and_duration(tmp_path):
     assert ok and frame[180,320,2]>150 and frame[180,320,0]<20
     assert inspect(raw)["frames"]==60
 
+def test_normalize_raw_folder_keeps_originals_and_relative_layout(tmp_path):
+    import json
+    from src.data.pipeline import main
+
+    raw = tmp_path / "data/raw/fall"
+    source = raw / "nested/input.mp4"
+    make_video(source)
+    original = source.read_bytes()
+    configs = tmp_path / "configs"
+    configs.mkdir()
+    (configs / "data.json").write_text(
+        json.dumps(dict(width=320,height=180,fps=15)),
+        encoding="utf-8",
+    )
+
+    assert main(["normalize-raw", "--root", str(tmp_path)]) == 0
+
+    output = tmp_path / "data/processed/raw/fall/nested/input.mp4"
+    assert output.is_file()
+    assert source.read_bytes() == original
+    assert inspect(output)["frames"] == 30
+    records = (tmp_path / "data/metadata/local/raw_normalization.jsonl")
+    row = json.loads(records.read_text(encoding="utf-8").splitlines()[0])
+    assert row["raw_path"] == "data/raw/fall/nested/input.mp4"
+    assert row["processed_path"] == "data/processed/raw/fall/nested/input.mp4"
+
+def test_normalize_raw_does_not_overwrite_existing_output(tmp_path):
+    import json
+    from src.data.pipeline import main
+
+    source = tmp_path / "data/raw/input.mp4"
+    make_video(source)
+    output = tmp_path / "data/processed/raw/input.mp4"
+    output.parent.mkdir(parents=True)
+    output.write_bytes(b"keep")
+    configs = tmp_path / "configs"
+    configs.mkdir()
+    (configs / "data.json").write_text(json.dumps({}), encoding="utf-8")
+
+    assert main(["normalize-raw", "--root", str(tmp_path)]) == 1
+    assert output.read_bytes() == b"keep"
+
 def test_corrupt_video_rejected(tmp_path):
     bad=tmp_path/"bad.mp4"
     bad.write_bytes(b"not a video")
