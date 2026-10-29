@@ -1,5 +1,17 @@
 # Thực hiện issue #1 — Dữ liệu
 
+## Chuẩn hóa video có sẵn trong `data/raw`
+
+Nếu đã có video trong `data/raw` và chỉ cần chuẩn hóa để YOLO xử lý, không cần catalog hoặc manifest. Từ thư mục gốc repository, chạy:
+
+```powershell
+python -m src.data.pipeline normalize-raw
+```
+
+Pipeline quét đệ quy video `.avi`, `.m4v`, `.mkv`, `.mov`, `.mp4`, `.mpeg`, `.mpg`, `.wmv` và `.webm`; đầu ra MP4 theo cấu hình `configs/data.json` được lưu dưới `data/processed/raw/`, giữ nguyên cấu trúc thư mục tương đối. Mặc định là 640×360, 15 FPS, letterbox nền đen và không có âm thanh. Video nguồn chỉ được đọc, không bị thay đổi. Kết quả và lỗi lần lượt được ghi vào `data/metadata/local/raw_normalization.jsonl` và `raw_normalization_errors.jsonl`; có lỗi thì lệnh trả mã khác 0. Đầu ra đã tồn tại không bị ghi đè; dùng `--output-dir data\processed\raw_v2` để chạy vào thư mục mới.
+
+Chế độ này không tự suy đoán nhãn từ tên file/thư mục và không tạo split hay manifest dataset. Dùng quy trình bên dưới nếu cần catalog, nhãn, checksum nguồn và chia train/val/test.
+
 ## Chạy từ thư mục gốc repository
 
 Dùng Python 3.10/3.11 như tài liệu dự án và một môi trường ảo. Chỉ cài dependencies dữ liệu để không cần tải mô hình/GPU:

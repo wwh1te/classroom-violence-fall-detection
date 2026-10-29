@@ -13,7 +13,7 @@ from typing import Any
 
 import cv2
 
-from src.data.pipeline import inside, read_rows
+from src.data.pipeline import LABELS, inside, read_rows
 from src.pose.baseline import (
     COCO_KEYPOINTS,
     FallBaseline,
@@ -26,6 +26,7 @@ SKELETON_EDGES = (
     (5, 11), (6, 12), (11, 12), (11, 13), (13, 15),
     (12, 14), (14, 16),
 )
+VIDEO_EXTENSIONS = {".avi", ".m4v", ".mkv", ".mov", ".mp4", ".mpeg", ".mpg", ".wmv", ".webm"}
 
 
 def _safe_component(value: str) -> str:
@@ -280,9 +281,31 @@ def _sources(
         if not path.is_absolute():
             path = root / path
         path = path.resolve()
-        if not path.is_file():
-            raise ValueError(f"Video file does not exist: {path}")
-        return [{"path": path, "sample_id": None, "label": None}]
+        if path.is_file():
+            return [{"path": path, "sample_id": None, "label": None}]
+        if path.is_dir():
+            sources = []
+            for video in sorted(
+                item for item in path.rglob("*")
+                if item.is_file() and item.suffix.lower() in VIDEO_EXTENSIONS
+            ):
+                relative = video.relative_to(path)
+                label = (
+                    relative.parts[0]
+                    if len(relative.parts) > 1 and relative.parts[0] in LABELS
+                    else None
+                )
+                sources.append(
+                    {
+                        "path": video,
+                        "sample_id": relative.with_suffix("").as_posix(),
+                        "label": label,
+                    }
+                )
+            if not sources:
+                raise ValueError(f"No supported video files found in folder: {path}")
+            return sources
+        raise ValueError(f"Video file or folder does not exist: {path}")
 
     manifest_path = inside(root, manifest or "")
     rows = read_rows(manifest_path)
@@ -306,7 +329,10 @@ def _sources(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     inputs = parser.add_mutually_exclusive_group(required=True)
-    inputs.add_argument("--source", help="Single video file, relative to --root or absolute")
+    inputs.add_argument(
+        "--source",
+        help="Video file or folder (searched recursively), relative to --root or absolute",
+    )
     inputs.add_argument(
         "--manifest",
         help="Issue #1 JSONL manifest with processed_path entries",

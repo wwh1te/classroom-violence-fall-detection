@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import pytest
 
-from src.pose.pipeline import _run_directory, process_video
+from src.pose.pipeline import _run_directory, _sources, process_video
 
 
 class ArrayValue:
@@ -119,3 +119,27 @@ def test_run_directory_never_reuses_existing_run(tmp_path):
     with pytest.raises(FileExistsError):
         _run_directory(tmp_path / "out", source, "sample-1", "fixed-run")
     assert first.is_dir()
+
+
+def test_sources_recursively_lists_supported_video_files(tmp_path):
+    raw = tmp_path / "data" / "raw"
+    (raw / "fall" / "nested").mkdir(parents=True)
+    (raw / "sample.mp4").touch()
+    (raw / "fall" / "nested" / "clip.MKV").touch()
+    (raw / "notes.txt").touch()
+
+    sources = _sources(tmp_path, "data/raw", None, None)
+
+    assert [item["sample_id"] for item in sources] == [
+        "fall/nested/clip",
+        "sample",
+    ]
+    assert [item["label"] for item in sources] == ["fall", None]
+    assert all(item["path"].is_file() for item in sources)
+
+
+def test_sources_rejects_empty_video_folder(tmp_path):
+    (tmp_path / "raw").mkdir()
+
+    with pytest.raises(ValueError, match="No supported video files"):
+        _sources(tmp_path, "raw", None, None)
