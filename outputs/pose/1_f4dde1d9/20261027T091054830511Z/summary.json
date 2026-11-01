@@ -1,0 +1,43 @@
+{
+  "source": "D:\\classroom-violence-fall-detection\\data\\raw\\1.mp4",
+  "sample_id": null,
+  "source_label": null,
+  "frames": 158,
+  "people_detections": 436,
+  "confirmed_fall_candidate_frames": 0,
+  "fps": 30.0,
+  "frame_width": 1920,
+  "frame_height": 1080,
+  "model": "yolo11n-pose.pt",
+  "tracker": "bytetrack.yaml",
+  "outputs": {
+    "poses": "poses.jsonl",
+    "annotated_video": "annotated.mp4"
+  },
+  "keypoint_names": [
+    "nose",
+    "left_eye",
+    "right_eye",
+    "left_ear",
+    "right_ear",
+    "left_shoulder",
+    "right_shoulder",
+    "left_elbow",
+    "right_elbow",
+    "left_wrist",
+    "right_wrist",
+    "left_hip",
+    "right_hip",
+    "left_knee",
+    "right_knee",
+    "left_ankle",
+    "right_ankle"
+  ],
+  "fall_baseline": {
+    "box_aspect_ratio_min": 1.25,
+    "torso_tilt_degrees_min": 50.0,
+    "keypoint_confidence_min": 0.25,
+    "consecutive_frames": 3,
+    "warning": "Heuristic candidate only; not a trained or validated classifier."
+  }
+}
