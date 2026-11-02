@@ -7,3 +7,6 @@ data/metadata/local/
 data/annotations/local/
 outputs/pose/
 models/*.pt
+
+# Generated experiment and validation outputs
+outputs/
