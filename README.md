@@ -253,3 +253,40 @@ python -m src.pose.pipeline --manifest data\metadata\local\manifest.jsonl --spli
 ```
 
 Kết quả chỉ được tạo mới trong `outputs\pose\`; xem [docs/pose_workflow.md](docs/pose_workflow.md) để biết schema keypoint, ngưỡng heuristic và các giới hạn đánh giá. Baseline là bộ luật sàng lọc candidate, không phải bộ phân loại té ngã đã được huấn luyện/kiểm định.
+
+## MLP/LSTM, huấn luyện và đánh giá (issue #3)
+
+Triển khai baseline nhận dạng hành động từ chuỗi đặc trưng Pose, gồm hai kiến trúc:
+
+- **MLP:** Mô hình phân loại baseline, sử dụng đặc trưng từ chuỗi keypoint.
+- **LSTM:** Mô hình xử lý chuỗi thời gian, phục vụ nhận dạng hành động qua nhiều frame.
+
+### Các thành phần
+
+- `src/models/mlp.py`: định nghĩa MLPClassifier.
+- `src/models/lstm.py`: định nghĩa SequenceLSTMClassifier.
+- `src/models/dataset.py`: tạo Dataset từ dữ liệu Pose và nhãn trong manifest.
+- `src/models/train.py`: hỗ trợ huấn luyện, validation, early stopping và lưu checkpoint; đã kiểm thử bằng dữ liệu synthetic.
+- `src/evaluation/evaluate.py`: tính metric, tạo báo cáo dự đoán và confusion matrix.
+- `src/evaluation/plots.py`: trực quan hóa confusion matrix và các metric.
+- `src/evaluation/error_analysis.py`: thống kê và phân tích các trường hợp dự đoán sai.
+
+### Kiểm tra pipeline
+
+Manifest pilot gồm 10 video, chia thành 4 normal, 4 violence và 2 fall. Dữ liệu được sử dụng để kiểm tra khả năng trích xuất đặc trưng, tạo Dataset và tích hợp các thành phần mô hình.
+
+Các bước kiểm tra đã thực hiện:
+
+1. Kiểm tra đầu vào và đầu ra của MLP/LSTM.
+2. Huấn luyện thử bằng dữ liệu synthetic và kiểm tra việc lưu `best_model.pt`, `last_model.pt`.
+3. Kiểm tra tính toán Accuracy, Precision, Recall, F1-score và confusion matrix.
+4. Kiểm tra `evaluate_model`, bao gồm việc giữ đúng `sample_id` từ PoseSequenceDataset.
+5. Kiểm tra Error Analysis, báo cáo CSV và Markdown.
+
+### Kết quả và giới hạn
+
+Các smoke test xác nhận những thành phần trên hoạt động theo thiết kế thử nghiệm. Báo cáo kết quả chi tiết được lưu tại [docs/experiments/pose_mlp_lstm_pilot.md](docs/experiments/pose_mlp_lstm_pilot.md).
+
+**Lưu ý:** Đây là kết quả kiểm thử pipeline, không phải kết quả đánh giá hiệu năng mô hình đã huấn luyện trên dataset thực tế. Các metric synthetic và dự đoán từ MLP chưa huấn luyện chỉ dùng để xác minh chức năng. Chưa thực hiện huấn luyện và đánh giá chính thức trên toàn bộ dataset 420 video.
+
+Các kết quả chạy thử, video annotated và checkpoint được lưu cục bộ trong `outputs/`, không đưa vào Git repository.
